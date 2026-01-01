@@ -15,36 +15,38 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val dao = RecipeDatabase.getDatabase(application).recipeDao()
 
-    // 1. Daftar Kategori Statis
     val categories = listOf("Semua", "Tradisional", "Sarapan", "Makan Siang", "Jajanan", "Diet")
 
-    // 2. State Kategori yang sedang dipilih (Default: Semua)
     private val _selectedCategory = MutableStateFlow("Semua")
     val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
 
-    // 3. Mengambil Semua Resep dari DB
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
     private val _allRecipes = dao.getAllRecipes()
 
-    // 4. Logika FILTER: Gabungkan data resep + kategori yang dipilih
-    val recipes: StateFlow<List<Recipe>> = combine(_allRecipes, _selectedCategory) { recipes, category ->
-        if (category == "Semua") {
-            recipes
-        } else {
-            recipes.filter { it.category == category }
+    val recipes: StateFlow<List<Recipe>> = combine(_allRecipes, _selectedCategory, _searchQuery) { list, category, query ->
+        list.filter { recipe ->
+            val matchCategory = if (category == "Semua") true else recipe.category == category
+
+            val matchSearch = if (query.isEmpty()) true else {
+                recipe.title.contains(query, ignoreCase = true) ||
+                        recipe.ingredients.contains(query, ignoreCase = true)
+            }
+
+            matchCategory && matchSearch
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // List Favorit (Tidak terpengaruh filter kategori)
     val favoriteRecipes: StateFlow<List<Recipe>> = dao.getFavoriteRecipes()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Fungsi ganti kategori
     fun selectCategory(category: String) {
         _selectedCategory.value = category
     }
 
-    suspend fun getRecipeById(id: String): Recipe? {
-        return dao.getRecipeById(id)
+    fun onSearchTextChange(text: String) {
+        _searchQuery.value = text
     }
 
     fun toggleFavorite(recipe: Recipe) {
@@ -52,5 +54,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val updatedRecipe = recipe.copy(isFavorite = !recipe.isFavorite)
             dao.updateRecipe(updatedRecipe)
         }
+    }
+
+    suspend fun getRecipeById(id: String): Recipe? {
+        return dao.getRecipeById(id)
     }
 }

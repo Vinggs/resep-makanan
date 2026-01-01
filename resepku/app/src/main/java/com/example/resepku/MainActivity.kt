@@ -19,19 +19,16 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val viewModel: MainViewModel = viewModel()
 
-                // Start Destination langsung ke HOME
                 NavHost(navController = navController, startDestination = "home") {
 
-                    // Rute Home
                     composable("home") {
                         HomeScreen(
                             viewModel = viewModel,
-                            onFavoriteClick = { navController.navigate("favorites") }, // Ke halaman favorit
+                            onFavoriteClick = { navController.navigate("favorites") },
                             onRecipeClick = { recipeId -> navController.navigate("detail/$recipeId") }
                         )
                     }
 
-                    // Rute Favorit (Baru)
                     composable("favorites") {
                         FavoriteScreen(
                             viewModel = viewModel,
@@ -40,7 +37,6 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    // Rute Detail
                     composable(
                         route = "detail/{recipeId}",
                         arguments = listOf(navArgument("recipeId") { type = NavType.StringType })

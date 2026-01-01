@@ -14,5 +14,9 @@ data class Recipe(
     val instructions: String,
     val imageResId: Int,
     val isFavorite: Boolean = false,
-    val category: String = "Lainnya" // <--- Kolom Baru
+    val category: String = "Lainnya",
+    val calories: String = "0 Kcal",
+    val carbs: String = "0g",
+    val protein: String = "0g",
+    val fat: String = "0g"
 )

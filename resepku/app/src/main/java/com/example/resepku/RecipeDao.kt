@@ -12,7 +12,6 @@ interface RecipeDao {
     @Query("SELECT * FROM recipes")
     fun getAllRecipes(): Flow<List<Recipe>>
 
-    // Ambil hanya yang difavoritkan
     @Query("SELECT * FROM recipes WHERE isFavorite = 1")
     fun getFavoriteRecipes(): Flow<List<Recipe>>
 
@@ -22,7 +21,6 @@ interface RecipeDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(recipes: List<Recipe>)
 
-    // Untuk mengubah status favorit (true/false)
     @Update
     suspend fun updateRecipe(recipe: Recipe)
 }
