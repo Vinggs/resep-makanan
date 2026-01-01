@@ -19,30 +19,38 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val viewModel: MainViewModel = viewModel()
 
-                NavHost(navController = navController, startDestination = "login") {
-                    composable("login") {
-                        LoginScreen(
-                            viewModel = viewModel,
-                            onLoginSuccess = { navController.navigate("home") { popUpTo("login") { inclusive = true } } }
-                        )
-                    }
+                // Start Destination langsung ke HOME
+                NavHost(navController = navController, startDestination = "home") {
+
+                    // Rute Home
                     composable("home") {
                         HomeScreen(
                             viewModel = viewModel,
-                            onAddClick = { navController.navigate("add_recipe") },
-                            onLogout = { navController.navigate("login") { popUpTo("home") { inclusive = true } } },
+                            onFavoriteClick = { navController.navigate("favorites") }, // Ke halaman favorit
                             onRecipeClick = { recipeId -> navController.navigate("detail/$recipeId") }
                         )
                     }
-                    composable("add_recipe") {
-                        AddRecipeScreen(viewModel = viewModel, onRecipeAdded = { navController.popBackStack() })
+
+                    // Rute Favorit (Baru)
+                    composable("favorites") {
+                        FavoriteScreen(
+                            viewModel = viewModel,
+                            onBack = { navController.popBackStack() },
+                            onRecipeClick = { recipeId -> navController.navigate("detail/$recipeId") }
+                        )
                     }
+
+                    // Rute Detail
                     composable(
                         route = "detail/{recipeId}",
                         arguments = listOf(navArgument("recipeId") { type = NavType.StringType })
                     ) { backStackEntry ->
                         val recipeId = backStackEntry.arguments?.getString("recipeId")
-                        DetailScreen(recipeId = recipeId, viewModel = viewModel, onBack = { navController.popBackStack() })
+                        DetailScreen(
+                            recipeId = recipeId,
+                            viewModel = viewModel,
+                            onBack = { navController.popBackStack() }
+                        )
                     }
                 }
             }

@@ -8,9 +8,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import com.example.resepku.R // Pastikan import R ada
+// Pastikan import R sesuai package Anda
+import com.example.resepku.R
 
-@Database(entities = [Recipe::class], version = 1, exportSchema = false)
+@Database(entities = [Recipe::class], version = 2, exportSchema = false) // Naikkan version jadi 2 (atau uninstall app)
 abstract class RecipeDatabase : RoomDatabase() {
 
     abstract fun recipeDao(): RecipeDao
@@ -26,6 +27,7 @@ abstract class RecipeDatabase : RoomDatabase() {
                     RecipeDatabase::class.java,
                     "resepku_database"
                 )
+                    .fallbackToDestructiveMigration() // Hapus data lama jika versi berubah
                     .addCallback(RecipeDatabaseCallback(context))
                     .build()
                 INSTANCE = instance
@@ -46,56 +48,64 @@ abstract class RecipeDatabase : RoomDatabase() {
 
         suspend fun populateDatabase(context: Context) {
             val dao = getDatabase(context).recipeDao()
-            // DATA AWAL (SEED)
+
+            // DATA AWAL DENGAN KATEGORI
             val initialRecipes = listOf(
                 Recipe(
                     title = "Nasi Goreng",
-                    description = "Nasi goreng spesial pedas dengan telur mata sapi.",
-                    ingredients = "Nasi putih, Bawang, Cabai, Kecap, Telur",
-                    instructions = "1. Tumis bumbu.\n2. Masukkan nasi dan kecap.\n3. Sajikan dengan telur.",
-                    imageResId = R.drawable.nasi_goreng
+                    description = "Nasi goreng spesial pedas.",
+                    ingredients = "Nasi, Bawang, Cabai, Telur",
+                    instructions = "Tumis bumbu, masukkan nasi.",
+                    imageResId = R.drawable.nasi_goreng,
+                    category = "Sarapan"
                 ),
                 Recipe(
                     title = "Sate Ayam",
-                    description = "Sate ayam dengan bumbu kacang.",
-                    ingredients = "Daging Ayam, Kacang, Kecap",
-                    instructions = "1. Tusuk ayam.\n2. Bakar.\n3. Sajikan bumbu kacang.",
-                    imageResId = R.drawable.sate_ayam
+                    description = "Sate ayam bumbu kacang.",
+                    ingredients = "Ayam, Kacang, Kecap",
+                    instructions = "Bakar ayam, sajikan bumbu.",
+                    imageResId = R.drawable.sate_ayam,
+                    category = "Tradisional"
                 ),
                 Recipe(
                     title = "Rendang",
-                    description = "Daging sapi masak santan khas Padang.",
-                    ingredients = "Daging Sapi, Santan, Rempah",
-                    instructions = "1. Masak daging dan santan hingga kering.",
-                    imageResId = R.drawable.rendang
+                    description = "Daging sapi santan.",
+                    ingredients = "Daging, Santan",
+                    instructions = "Masak lama.",
+                    imageResId = R.drawable.rendang,
+                    category = "Tradisional"
                 ),
                 Recipe(
                     title = "Soto Betawi",
-                    description = "Soto kuah susu creamy.",
-                    ingredients = "Daging, Susu, Kentang",
-                    instructions = "1. Rebus daging.\n2. Tuang susu dan bumbu.",
-                    imageResId = R.drawable.soto
+                    description = "Soto kuah susu.",
+                    ingredients = "Daging, Susu",
+                    instructions = "Rebus kuah.",
+                    imageResId = R.drawable.soto,
+                    category = "Makan Siang"
                 ),
                 Recipe(
                     title = "Gado-gado",
-                    description = "Salad sayuran saus kacang.",
-                    ingredients = "Sayuran, Bumbu Kacang",
-                    instructions = "1. Rebus sayur.\n2. Siram bumbu.",
-                    imageResId = R.drawable.gado_gado
+                    description = "Salad sayur.",
+                    ingredients = "Sayur, Kacang",
+                    instructions = "Campur semua.",
+                    imageResId = R.drawable.gado_gado,
+                    category = "Diet"
                 ),
                 Recipe(
                     title = "Bakso Sapi",
                     description = "Bakso kuah segar.",
-                    ingredients = "Bakso, Mie, Kuah",
-                    instructions = "1. Rebus kuah.\n2. Masukkan bakso.",
-                    imageResId = R.drawable.bakso
+                    ingredients = "Bakso, Mie",
+                    instructions = "Rebus bakso.",
+                    imageResId = R.drawable.bakso,
+                    category = "Jajanan"
                 ),
                 Recipe(
                     title = "Mie Ayam",
-                    description = "Mie topping ayam kecap.",
-                    ingredients = "Mie, Ayam kecap",
-                    instructions = "1. Rebus mie.\n2. Beri topping.",
-                    imageResId = R.drawable.mie_ayam
+                    description = "Mie topping ayam.",
+                    ingredients = "Mie, Ayam",
+                    instructions = "Rebus mie.",
+                    imageResId = R.drawable.mie_ayam,
+                    category = "Jajanan"
                 )
             )
             dao.insertAll(initialRecipes)

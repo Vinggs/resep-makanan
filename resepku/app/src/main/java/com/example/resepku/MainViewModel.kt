@@ -7,51 +7,50 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import com.example.resepku.R
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val _isLoggedIn = MutableStateFlow(false)
-    val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
+    private val dao = RecipeDatabase.getDatabase(application).recipeDao()
 
-    private val database = RecipeDatabase.getDatabase(application)
-    private val dao = database.recipeDao()
+    // 1. Daftar Kategori Statis
+    val categories = listOf("Semua", "Tradisional", "Sarapan", "Makan Siang", "Jajanan", "Diet")
 
-    val recipes: StateFlow<List<Recipe>> = dao.getAllRecipes()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    // 2. State Kategori yang sedang dipilih (Default: Semua)
+    private val _selectedCategory = MutableStateFlow("Semua")
+    val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
+
+    // 3. Mengambil Semua Resep dari DB
+    private val _allRecipes = dao.getAllRecipes()
+
+    // 4. Logika FILTER: Gabungkan data resep + kategori yang dipilih
+    val recipes: StateFlow<List<Recipe>> = combine(_allRecipes, _selectedCategory) { recipes, category ->
+        if (category == "Semua") {
+            recipes
+        } else {
+            recipes.filter { it.category == category }
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // List Favorit (Tidak terpengaruh filter kategori)
+    val favoriteRecipes: StateFlow<List<Recipe>> = dao.getFavoriteRecipes()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // Fungsi ganti kategori
+    fun selectCategory(category: String) {
+        _selectedCategory.value = category
+    }
 
     suspend fun getRecipeById(id: String): Recipe? {
         return dao.getRecipeById(id)
     }
 
-    fun login(username: String, pass: String): Boolean {
-        if (username.isNotEmpty() && pass.isNotEmpty()) {
-            _isLoggedIn.value = true
-            return true
-        }
-        return false
-    }
-
-    fun logout() {
-        _isLoggedIn.value = false
-    }
-
-    fun addRecipe(title: String, desc: String, ingredients: String, instructions: String) {
+    fun toggleFavorite(recipe: Recipe) {
         viewModelScope.launch {
-            val newRecipe = Recipe(
-                title = title,
-                description = desc,
-                ingredients = ingredients,
-                instructions = instructions,
-                imageResId = R.drawable.placeholder_food
-            )
-            dao.insertRecipe(newRecipe)
+            val updatedRecipe = recipe.copy(isFavorite = !recipe.isFavorite)
+            dao.updateRecipe(updatedRecipe)
         }
     }
 }
